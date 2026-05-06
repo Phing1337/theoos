@@ -104,7 +104,7 @@ function App() {
       ...draft,
       requests: [savedRequest, ...draft.requests],
     }))
-    setSavedExport({ kind: 'request', item: savedRequest })
+    setSavedExport({ kind: 'pending-request', item: savedRequest })
     setComposer(null)
   }
 
@@ -133,34 +133,38 @@ function App() {
         </button>
       </header>
 
-      <section className={`owner-hero ${selectedOwner}`} aria-label={`Theo is with ${USERS[selectedOwner].name} today`}>
-        <div>
-          <p>{formatReadableDate(selectedDate)}</p>
-          <h2>Theo is with {USERS[selectedOwner].name}</h2>
-        </div>
-      </section>
-
-      <section className="global-actions" aria-label="Primary actions">
-        <button type="button" onClick={() => setComposer('event')}>Event</button>
-        <button type="button" onClick={() => setComposer('coverage')}>Coverage</button>
-        <button type="button" onClick={() => setComposer('swap')}>Swap</button>
-        <button type="button" onClick={() => setComposer('note')}>Note</button>
-      </section>
-
-      {savedExport ? (
-        <section className="save-confirmation">
+      <div className="dashboard-layout">
+        <section className={`owner-hero ${selectedOwner}`} aria-label={`Theo is with ${USERS[selectedOwner].name} today`}>
           <div>
-            <strong>{savedExport.kind === 'event' ? 'Event saved' : 'Request saved'}</strong>
-            <p>Download a one-time calendar file if you want this in your phone calendar.</p>
+            <p>{formatReadableDate(selectedDate)}</p>
+            <h2>Theo is with {USERS[selectedOwner].name}</h2>
+          </div>
+        </section>
+
+        <section className="global-actions" aria-label="Primary actions">
+          <button type="button" onClick={() => setComposer('event')}>New event</button>
+          <button type="button" onClick={() => setComposer('coverage')}>Ask coverage</button>
+          <button type="button" onClick={() => setComposer('swap')}>Propose swap</button>
+          <button type="button" onClick={() => setComposer('note')}>Add note</button>
+        </section>
+
+        {savedExport ? (
+          <section className="save-confirmation">
+            <div>
+            <strong>{savedExport.kind === 'event' ? 'Event saved' : 'Request sent'}</strong>
+            <p>
+              {savedExport.kind === 'event'
+                ? 'Download a one-time calendar file if you want this in your phone calendar.'
+                : 'Once this is accepted, an Add to calendar button will appear on the request.'}
+            </p>
           </div>
           <div className="confirmation-actions">
-            <button type="button" onClick={() => exportSavedItem(savedExport)}>Download ICS</button>
+            {savedExport.kind === 'event' ? <button type="button" onClick={() => exportSavedItem(savedExport)}>Download ICS</button> : null}
             <button type="button" onClick={() => setSavedExport(null)}>Done</button>
           </div>
         </section>
-      ) : null}
+        ) : null}
 
-      <div className="primary-layout">
         <section className="panel calendar-panel">
           <div className="section-head">
             <button className="icon-button" type="button" onClick={() => setVisibleMonth(addMonths(visibleMonth, -1))} aria-label="Previous month">
@@ -203,14 +207,12 @@ function App() {
 
           <ListBlock title="Requests">
             {selectedRequests.length ? selectedRequests.map((request) => (
-              <RequestItem key={request.id} request={request} currentUser={currentUser} onResolve={resolveRequest} />
+              <RequestItem key={request.id} request={request} currentUser={currentUser} onResolve={resolveRequest} onExport={exportRequest} />
             )) : <EmptyText>No requests attached to this day.</EmptyText>}
           </ListBlock>
         </section>
-      </div>
 
-      <div className="secondary-layout">
-        <section className="panel">
+        <section className="panel notes-panel">
           <div className="section-head aligned">
             <div>
               <p className="eyebrow">Notes</p>
@@ -231,7 +233,7 @@ function App() {
           </div>
         </section>
 
-        <section className="panel">
+        <section className="panel requests-panel">
           <div className="section-head aligned">
             <div>
               <p className="eyebrow">Request feed</p>
@@ -240,7 +242,7 @@ function App() {
           </div>
           <div className="feed">
             {data.requests.map((request) => (
-              <RequestItem key={request.id} request={request} currentUser={currentUser} onResolve={resolveRequest} />
+              <RequestItem key={request.id} request={request} currentUser={currentUser} onResolve={resolveRequest} onExport={exportRequest} />
             ))}
           </div>
         </section>
@@ -256,6 +258,7 @@ function App() {
           type={composer}
           selectedDate={selectedDate}
           requests={data.requests}
+          currentUser={currentUser}
           onClose={() => setComposer(null)}
           onEvent={addEvent}
           onNote={addNote}
@@ -312,11 +315,14 @@ function MonthGrid({ month, selectedDate, today, events, requests, onSelect }) {
   )
 }
 
-function Composer({ type, selectedDate, requests, onClose, onEvent, onNote, onRequest }) {
+function Composer({ type, selectedDate, requests, currentUser, onClose, onEvent, onNote, onRequest }) {
+  const otherParent = otherUser(currentUser)
+  const initialOwnDate = ownerForDate(selectedDate, requests) === currentUser ? selectedDate : findNearestDateByOwner(selectedDate, currentUser, requests)
+  const initialOtherDate = ownerForDate(selectedDate, requests) === otherParent ? selectedDate : findNearestDateByOwner(selectedDate, otherParent, requests)
   const [form, setForm] = useState({
     title: '',
-    date: selectedDate,
-    toDate: selectedDate,
+    date: type === 'coverage' || type === 'swap' ? initialOwnDate : selectedDate,
+    toDate: type === 'swap' ? initialOtherDate : selectedDate,
     startTime: '',
     endTime: '',
     notes: '',
@@ -326,9 +332,11 @@ function Composer({ type, selectedDate, requests, onClose, onEvent, onNote, onRe
     window: 'full',
     isStanding: false,
   })
-  const [swapTarget, setSwapTarget] = useState('date')
+  const [swapTarget, setSwapTarget] = useState('toDate')
+  const [formError, setFormError] = useState('')
 
   function update(field, value) {
+    setFormError('')
     setForm((current) => ({ ...current, [field]: value }))
   }
 
@@ -357,12 +365,31 @@ function Composer({ type, selectedDate, requests, onClose, onEvent, onNote, onRe
     }
 
     if (type === 'coverage') {
+      if (ownerForDate(form.date, requests) !== currentUser) {
+        setFormError(`Pick one of your ${USERS[currentUser].name} days for coverage.`)
+        return
+      }
       onRequest({
         type: 'coverage',
         date: form.date,
         window: form.window,
         reason: form.reason.trim() || 'Coverage requested.',
       })
+      return
+    }
+
+    if (ownerForDate(form.toDate, requests) !== otherParent) {
+      setFormError(`Pick one of ${USERS[otherParent].name}'s days to ask for.`)
+      return
+    }
+
+    if (ownerForDate(form.date, requests) !== currentUser) {
+      setFormError(`Pick one of your ${USERS[currentUser].name} days to offer back.`)
+      return
+    }
+
+    if (form.date === form.toDate) {
+      setFormError('Choose two different days for the swap.')
       return
     }
 
@@ -405,11 +432,12 @@ function Composer({ type, selectedDate, requests, onClose, onEvent, onNote, onRe
               type={type}
               form={form}
               requests={requests}
+              currentUser={currentUser}
               onPick={(date) => update('date', date)}
             />
-            <label>Date<input type="date" value={form.date} onChange={(event) => update('date', event.target.value)} /></label>
+            <label>Your day to cover<input type="date" value={form.date} onChange={(event) => update('date', event.target.value)} /></label>
             <label>Window<select value={form.window} onChange={(event) => update('window', event.target.value)}>{REQUEST_WINDOWS.map((window) => <option key={window} value={window}>{titleCase(window)}</option>)}</select></label>
-            <label>Reason<textarea value={form.reason} onChange={(event) => update('reason', event.target.value)} placeholder="What coverage do you need?" /></label>
+            <label>What do you need?<textarea value={form.reason} onChange={(event) => update('reason', event.target.value)} placeholder={`Could ${USERS[otherParent].name} cover this time?`} /></label>
           </>
         ) : null}
 
@@ -419,15 +447,16 @@ function Composer({ type, selectedDate, requests, onClose, onEvent, onNote, onRe
               type={type}
               form={form}
               requests={requests}
+              currentUser={currentUser}
               activeField={swapTarget}
               onActiveField={setSwapTarget}
               onPick={(date) => update(swapTarget, date)}
             />
             <div className="form-row">
-              <label>Give<input type="date" value={form.date} onFocus={() => setSwapTarget('date')} onChange={(event) => update('date', event.target.value)} /></label>
-              <label>Receive<input type="date" value={form.toDate} onFocus={() => setSwapTarget('toDate')} onChange={(event) => update('toDate', event.target.value)} /></label>
+              <label>Ask for {USERS[otherParent].name}'s day<input type="date" value={form.toDate} onFocus={() => setSwapTarget('toDate')} onChange={(event) => update('toDate', event.target.value)} /></label>
+              <label>Offer your day<input type="date" value={form.date} onFocus={() => setSwapTarget('date')} onChange={(event) => update('date', event.target.value)} /></label>
             </div>
-            <label>Reason<textarea value={form.reason} onChange={(event) => update('reason', event.target.value)} placeholder="Why this swap would help" /></label>
+            <label>Note for {USERS[otherParent].name}<textarea value={form.reason} onChange={(event) => update('reason', event.target.value)} placeholder={`Could I take ${formatShortDate(form.toDate)} and give you ${formatShortDate(form.date)}?`} /></label>
           </>
         ) : null}
 
@@ -439,15 +468,24 @@ function Composer({ type, selectedDate, requests, onClose, onEvent, onNote, onRe
           </>
         ) : null}
 
-        <button className="primary-button" type="submit">Save</button>
+        {formError ? <p className="form-error" role="alert">{formError}</p> : null}
+        {type === 'coverage' || type === 'swap' ? <p className="form-hint">Once this is accepted, you can add it to your calendar.</p> : null}
+        <button className="primary-button" type="submit">{submitLabel(type)}</button>
       </form>
     </div>
   )
 }
 
-function RequestCalendarPicker({ type, form, requests, activeField, onActiveField, onPick }) {
-  const [pickerMonth, setPickerMonth] = useState(() => startOfMonth(form.date))
+function RequestCalendarPicker({ type, form, requests, currentUser, activeField, onActiveField, onPick }) {
+  const [pickerMonth, setPickerMonth] = useState(() => startOfMonth(type === 'swap' ? form.toDate : form.date))
   const days = buildMonthDays(pickerMonth)
+  const otherParent = otherUser(currentUser)
+  const targetOwner = type === 'coverage' || activeField === 'date' ? currentUser : otherParent
+  const pickerCopy = type === 'coverage'
+    ? `Pick one of your ${USERS[currentUser].name} days that needs coverage.`
+    : activeField === 'toDate'
+      ? `Pick one of ${USERS[otherParent].name}'s days to ask for.`
+      : `Pick one of your ${USERS[currentUser].name} days to offer back.`
 
   return (
     <section className="request-calendar" aria-label="Custody calendar context">
@@ -455,6 +493,7 @@ function RequestCalendarPicker({ type, form, requests, activeField, onActiveFiel
         <div>
           <p className="eyebrow">Calendar context</p>
           <h3>{pickerMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</h3>
+          <p className="request-calendar-copy">{pickerCopy}</p>
         </div>
         <div className="mini-nav">
           <button type="button" onClick={() => setPickerMonth(addMonths(pickerMonth, -1))} aria-label="Previous month"><ChevronLeft /></button>
@@ -464,8 +503,8 @@ function RequestCalendarPicker({ type, form, requests, activeField, onActiveFiel
 
       {type === 'swap' ? (
         <div className="swap-targets" role="group" aria-label="Swap date target">
-          <button className={activeField === 'date' ? 'active' : ''} type="button" onClick={() => onActiveField('date')}>Set give day</button>
-          <button className={activeField === 'toDate' ? 'active' : ''} type="button" onClick={() => onActiveField('toDate')}>Set receive day</button>
+          <button className={activeField === 'toDate' ? 'active' : ''} type="button" onClick={() => onActiveField('toDate')}>Ask for {USERS[otherParent].name}'s day</button>
+          <button className={activeField === 'date' ? 'active' : ''} type="button" onClick={() => onActiveField('date')}>Offer your day</button>
         </div>
       ) : null}
 
@@ -476,15 +515,17 @@ function RequestCalendarPicker({ type, form, requests, activeField, onActiveFiel
 
           const iso = formatDate(date)
           const owner = ownerForDate(iso, requests)
+          const isPickable = owner === targetOwner
           const isCoverageDate = type === 'coverage' && iso === form.date
           const isGiveDate = type === 'swap' && iso === form.date
           const isReceiveDate = type === 'swap' && iso === form.toDate
 
           return (
             <button
-              className={`mini-calendar-cell ${owner} ${isCoverageDate || isGiveDate || isReceiveDate ? 'selected' : ''} ${isGiveDate ? 'give' : ''} ${isReceiveDate ? 'receive' : ''}`}
+              className={`mini-calendar-cell ${owner} ${isPickable ? '' : 'unavailable'} ${isCoverageDate || isGiveDate || isReceiveDate ? 'selected' : ''} ${isGiveDate ? 'give' : ''} ${isReceiveDate ? 'receive' : ''}`}
               type="button"
               key={iso}
+              disabled={!isPickable}
               onClick={() => onPick(iso)}
             >
               <span>{date.getDate()}</span>
@@ -501,8 +542,9 @@ function RequestCalendarPicker({ type, form, requests, activeField, onActiveFiel
   )
 }
 
-function RequestItem({ request, currentUser, onResolve }) {
+function RequestItem({ request, currentUser, onResolve, onExport }) {
   const canResolve = request.status === 'pending' && request.requestedBy !== currentUser
+  const canExport = request.status === 'approved'
 
   return (
     <article className={`request-row ${request.status}`}>
@@ -512,17 +554,20 @@ function RequestItem({ request, currentUser, onResolve }) {
           <span>{request.status}</span>
           <span>{USERS[request.requestedBy].name}</span>
         </div>
-        <strong>{requestLabel(request)}</strong>
-        <p>{request.reason}</p>
+        <strong>{requestTitle(request, currentUser)}</strong>
+        <p>{requestDescription(request, currentUser)}</p>
       </div>
-      <div className="request-actions">
-        {canResolve ? (
-          <>
-            <button type="button" onClick={() => onResolve(request.id, 'approved')}>Accept</button>
-            <button type="button" onClick={() => onResolve(request.id, 'declined')}>Decline</button>
-          </>
-        ) : null}
-      </div>
+      {canResolve || canExport ? (
+        <div className="request-actions">
+          {canResolve ? (
+            <>
+              <button type="button" onClick={() => onResolve(request.id, 'approved')}>Accept</button>
+              <button type="button" onClick={() => onResolve(request.id, 'declined')}>Decline</button>
+            </>
+          ) : null}
+          {canExport ? <button type="button" onClick={() => onExport(request)}>Add to calendar</button> : null}
+        </div>
+      ) : null}
     </article>
   )
 }
@@ -583,9 +628,19 @@ function requestTouchesDate(request, date) {
   return request.fromDate === date || request.toDate === date
 }
 
-function requestLabel(request) {
-  if (request.type === 'coverage') return `${formatShortDate(request.date)} · ${titleCase(request.window)}`
-  return `${formatShortDate(request.fromDate)} to ${formatShortDate(request.toDate)}`
+function requestTitle(request, currentUser) {
+  if (request.type === 'coverage') return `Coverage for ${formatShortDate(request.date)} ${titleCase(request.window)}`
+
+  const requester = request.requestedBy === currentUser ? 'You' : USERS[request.requestedBy].name
+  const otherParent = USERS[otherUser(request.requestedBy)].name
+  return `${requester} asked for ${otherParent}'s ${formatShortDate(request.toDate)}`
+}
+
+function requestDescription(request, currentUser) {
+  if (request.type === 'coverage') return request.reason
+
+  const offeredBy = request.requestedBy === currentUser ? 'your' : `${USERS[request.requestedBy].name}'s`
+  return `Offering ${offeredBy} ${formatShortDate(request.fromDate)} in return. ${request.reason}`
 }
 
 function eventTimeLabel(event) {
@@ -596,6 +651,20 @@ function eventTimeLabel(event) {
 
 function sortNotes(notes) {
   return [...notes].sort((a, b) => Number(b.isStanding) - Number(a.isStanding) || new Date(b.createdAt) - new Date(a.createdAt))
+}
+
+function findNearestDateByOwner(startDate, owner, requests) {
+  for (let offset = 0; offset < 42; offset += 1) {
+    const forward = addDays(startDate, offset)
+    if (ownerForDate(forward, requests) === owner) return forward
+
+    if (offset > 0) {
+      const backward = addDays(startDate, -offset)
+      if (ownerForDate(backward, requests) === owner) return backward
+    }
+  }
+
+  return startDate
 }
 
 function buildMonthDays(month) {
@@ -746,9 +815,16 @@ function makeId() {
 
 function composerTitle(type) {
   if (type === 'event') return 'Event'
-  if (type === 'coverage') return 'Coverage request'
-  if (type === 'swap') return 'Swap request'
+  if (type === 'coverage') return 'Ask for coverage'
+  if (type === 'swap') return 'Ask for a swap'
   return 'Note'
+}
+
+function submitLabel(type) {
+  if (type === 'coverage') return 'Send coverage request'
+  if (type === 'swap') return 'Send swap request'
+  if (type === 'event') return 'Save event'
+  return 'Save note'
 }
 
 function ChevronLeft() {
