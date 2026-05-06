@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700;9..40,800&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');
+
+:root {
+  --bg: #e9eee5;
+  --surface: #f4f9f1;
+  --surface-2: #d8e2d2;
+  --text: #182018;
+  --text-sub: #526850;
+  --border: rgba(50, 70, 45, 0.11);
+  --nick: #475569;
+  --kayla: #e05c43;
+  --theo: #8b5cf6;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --display-weight: 700;
+  --body-weight: 400;
+  --type-tracking: 0;
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 9px;
+  --radius-xl: 13px;
+  --shadow-card:
+    0 2px 3px rgba(40, 60, 35, 0.05),
+    0 6px 14px rgba(40, 60, 35, 0.095),
+    0 18px 44px rgba(40, 60, 35, 0.126);
+  --space: 17px;
+  --space-sm: 11px;
+  --space-lg: 23px;
+
+  font-family: var(--font-body);
+  font-weight: var(--body-weight);
+  letter-spacing: var(--type-tracking);
+  color: var(--text);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.08), transparent 32rem),
+    var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100svh;
+  margin: 0;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--theo) 55%, transparent);
+  outline-offset: 2px;
+}
+
+#root {
+  min-height: 100svh;
+}
