@@ -160,87 +160,91 @@ function App() {
         </section>
       ) : null}
 
-      <section className="panel calendar-panel">
-        <div className="section-head">
-          <button className="icon-button" type="button" onClick={() => setVisibleMonth(addMonths(visibleMonth, -1))} aria-label="Previous month">
-            <ChevronLeft />
-          </button>
-          <h2>{visibleMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</h2>
-          <button className="icon-button" type="button" onClick={() => setVisibleMonth(addMonths(visibleMonth, 1))} aria-label="Next month">
-            <ChevronRight />
-          </button>
-        </div>
-        <MonthGrid
-          month={visibleMonth}
-          selectedDate={selectedDate}
-          today={formatDate(today)}
-          events={data.events}
-          requests={data.requests}
-          onSelect={setSelectedDate}
-        />
-      </section>
-
-      <section className="panel day-panel">
-        <div className="section-head aligned">
-          <div>
-            <p className="eyebrow">{formatReadableDate(selectedDate)}</p>
-            <h2>Day details</h2>
+      <div className="primary-layout">
+        <section className="panel calendar-panel">
+          <div className="section-head">
+            <button className="icon-button" type="button" onClick={() => setVisibleMonth(addMonths(visibleMonth, -1))} aria-label="Previous month">
+              <ChevronLeft />
+            </button>
+            <h2>{visibleMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</h2>
+            <button className="icon-button" type="button" onClick={() => setVisibleMonth(addMonths(visibleMonth, 1))} aria-label="Next month">
+              <ChevronRight />
+            </button>
           </div>
-          <div className="owner-pill" data-owner={selectedOwner}>{USERS[selectedOwner].name}</div>
-        </div>
+          <MonthGrid
+            month={visibleMonth}
+            selectedDate={selectedDate}
+            today={formatDate(today)}
+            events={data.events}
+            requests={data.requests}
+            onSelect={setSelectedDate}
+          />
+        </section>
 
-        <ListBlock title="Events">
-          {selectedEvents.length ? selectedEvents.map((event) => (
-            <article className="list-item" key={event.id}>
-              <div>
-                <strong>{event.title}</strong>
-                <p>{eventTimeLabel(event)}{event.notes ? ` · ${event.notes}` : ''}</p>
-              </div>
-            </article>
-          )) : <EmptyText>No events for this day.</EmptyText>}
-        </ListBlock>
-
-        <ListBlock title="Requests">
-          {selectedRequests.length ? selectedRequests.map((request) => (
-            <RequestItem key={request.id} request={request} currentUser={currentUser} onResolve={resolveRequest} />
-          )) : <EmptyText>No requests attached to this day.</EmptyText>}
-        </ListBlock>
-      </section>
-
-      <section className="panel">
-        <div className="section-head aligned">
-          <div>
-            <p className="eyebrow">Notes</p>
-            <h2>Current notes</h2>
+        <section className="panel day-panel">
+          <div className="section-head aligned">
+            <div>
+              <p className="eyebrow">{formatReadableDate(selectedDate)}</p>
+              <h2>Day details</h2>
+            </div>
+            <div className="owner-pill" data-owner={selectedOwner}>{USERS[selectedOwner].name}</div>
           </div>
-          <button className="small-action" type="button" onClick={() => setComposer('note')}>Add</button>
-        </div>
-        <div className="notes-list">
-          {recentNotes.map((note) => (
-            <article className="note-row" key={note.id}>
-              <div>
-                <p className="note-context">{noteContext(note)}</p>
-                <p>{note.text}</p>
-              </div>
-              <button className="delete-button" type="button" onClick={() => deleteNote(note.id)}>Delete</button>
-            </article>
-          ))}
-        </div>
-      </section>
 
-      <section className="panel">
-        <div className="section-head aligned">
-          <div>
-            <p className="eyebrow">Request feed</p>
-            <h2>Swaps and coverage</h2>
+          <ListBlock title="Events">
+            {selectedEvents.length ? selectedEvents.map((event) => (
+              <article className="list-item" key={event.id}>
+                <div>
+                  <strong>{event.title}</strong>
+                  <p>{eventTimeLabel(event)}{event.notes ? ` · ${event.notes}` : ''}</p>
+                </div>
+              </article>
+            )) : <EmptyText>No events for this day.</EmptyText>}
+          </ListBlock>
+
+          <ListBlock title="Requests">
+            {selectedRequests.length ? selectedRequests.map((request) => (
+              <RequestItem key={request.id} request={request} currentUser={currentUser} onResolve={resolveRequest} />
+            )) : <EmptyText>No requests attached to this day.</EmptyText>}
+          </ListBlock>
+        </section>
+      </div>
+
+      <div className="secondary-layout">
+        <section className="panel">
+          <div className="section-head aligned">
+            <div>
+              <p className="eyebrow">Notes</p>
+              <h2>Current notes</h2>
+            </div>
+            <button className="small-action" type="button" onClick={() => setComposer('note')}>Add</button>
           </div>
-        </div>
-        <div className="feed">
-          {data.requests.map((request) => (
-            <RequestItem key={request.id} request={request} currentUser={currentUser} onResolve={resolveRequest} />
-          ))}
-        </div>
-      </section>
+          <div className="notes-list">
+            {recentNotes.map((note) => (
+              <article className="note-row" key={note.id}>
+                <div>
+                  <p className="note-context">{noteContext(note)}</p>
+                  <p>{note.text}</p>
+                </div>
+                <button className="delete-button" type="button" onClick={() => deleteNote(note.id)}>Delete</button>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="panel">
+          <div className="section-head aligned">
+            <div>
+              <p className="eyebrow">Request feed</p>
+              <h2>Swaps and coverage</h2>
+            </div>
+          </div>
+          <div className="feed">
+            {data.requests.map((request) => (
+              <RequestItem key={request.id} request={request} currentUser={currentUser} onResolve={resolveRequest} />
+            ))}
+          </div>
+        </section>
+      </div>
 
       <footer className="session-footer">
         <span>Local draft as {USERS[currentUser].name}</span>

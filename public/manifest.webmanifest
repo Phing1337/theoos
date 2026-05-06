@@ -1,0 +1,19 @@
+{
+  "name": "TheoOS",
+  "short_name": "TheoOS",
+  "description": "A small co-parenting calendar prototype for Theo.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#E9EEE5",
+  "theme_color": "#E9EEE5",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

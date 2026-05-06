@@ -26,6 +26,8 @@
   --space: 17px;
   --space-sm: 11px;
   --space-lg: 23px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-press: cubic-bezier(0.25, 1, 0.5, 1);
 
   font-family: var(--font-body);
   font-weight: var(--body-weight);
@@ -42,6 +44,7 @@
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -52,6 +55,8 @@ body {
 
 button {
   cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
 }
 
 button:focus-visible,
@@ -65,4 +70,15 @@ textarea:focus-visible {
 
 #root {
   min-height: 100svh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

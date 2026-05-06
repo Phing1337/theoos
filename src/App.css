@@ -1,8 +1,11 @@
 .app-shell {
-  width: min(100%, 390px);
+  width: 100%;
+  max-width: 1120px;
   min-height: 100svh;
   margin: 0 auto;
-  padding: var(--space-sm) var(--space) 42px;
+  padding-block: max(var(--space-sm), env(safe-area-inset-top)) max(42px, env(safe-area-inset-bottom));
+  padding-left: max(8px, env(safe-area-inset-left));
+  padding-right: max(8px, env(safe-area-inset-right));
 }
 
 .app-header,
@@ -25,6 +28,7 @@
 
 .app-header {
   padding: 8px 0 10px;
+  animation: riseIn 360ms var(--ease-out) both;
 }
 
 .app-logo {
@@ -101,6 +105,8 @@ textarea {
 
 button {
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .owner-hero {
@@ -113,6 +119,7 @@ button {
   padding: 14px var(--space);
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 1px 0 rgba(24, 32, 24, 0.04);
+  animation: riseIn 420ms 40ms var(--ease-out) both;
 }
 
 .owner-hero::before {
@@ -159,6 +166,7 @@ button {
   position: relative;
   z-index: 1;
   margin: var(--space-sm) 0;
+  animation: riseIn 420ms 80ms var(--ease-out) both;
 }
 
 .global-actions button,
@@ -172,7 +180,15 @@ button {
   min-height: 38px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+  transition:
+    background 180ms var(--ease-out),
+    border-color 180ms var(--ease-out),
+    box-shadow 180ms var(--ease-out),
+    color 180ms var(--ease-out),
+    opacity 180ms var(--ease-out),
+    transform 120ms var(--ease-press);
+  min-height: 44px;
+  will-change: transform;
 }
 
 .global-actions button:active,
@@ -183,7 +199,7 @@ button {
 .confirmation-actions button:active,
 .picker-actions button:active,
 .icon-button:active {
-  transform: translateY(1px);
+  transform: translateY(1px) scale(0.97);
 }
 
 .global-actions button {
@@ -192,6 +208,16 @@ button {
   box-shadow: 0 1px 2px rgba(40, 60, 35, 0.04), 0 4px 10px rgba(40, 60, 35, 0.07);
   font-size: 0.78rem;
   font-weight: 800;
+}
+
+.global-actions button:hover,
+.small-action:hover,
+.delete-button:hover,
+.request-actions button:hover,
+.confirmation-actions button:hover,
+.picker-actions button:hover,
+.icon-button:hover {
+  background: color-mix(in srgb, var(--surface-2) 68%, var(--surface));
 }
 
 .save-confirmation {
@@ -204,6 +230,7 @@ button {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--theo) 8%, var(--surface));
+  animation: confirmIn 280ms var(--ease-out) both;
 }
 
 .save-confirmation p {
@@ -236,6 +263,13 @@ button {
   border-radius: var(--radius-xl);
   background: color-mix(in srgb, var(--surface) 92%, white);
   box-shadow: 0 1px 2px rgba(40, 60, 35, 0.04), 0 6px 18px rgba(40, 60, 35, 0.08);
+  animation: riseIn 460ms 120ms var(--ease-out) both;
+}
+
+.primary-layout,
+.secondary-layout {
+  display: grid;
+  gap: var(--space-sm);
 }
 
 .calendar-panel {
@@ -280,12 +314,18 @@ button {
   position: relative;
   display: grid;
   place-items: center;
-  min-height: 40px;
+  min-height: 44px;
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--text);
   font-weight: 700;
+  min-width: 0;
+  transition:
+    background 180ms var(--ease-out),
+    border-color 180ms var(--ease-out),
+    color 180ms var(--ease-out),
+    transform 120ms var(--ease-press);
 }
 
 .calendar-cell.nick {
@@ -313,6 +353,18 @@ button {
 
 .calendar-cell.selected.kayla {
   background: var(--kayla);
+}
+
+.calendar-cell:active {
+  transform: scale(0.94);
+}
+
+.calendar-cell.selected {
+  transform: translateY(-1px);
+}
+
+.calendar-cell.selected:active {
+  transform: translateY(-1px) scale(0.94);
 }
 
 .calendar-cell i {
@@ -360,6 +412,7 @@ button {
   padding: 12px 0;
   border-top: 1px solid var(--border);
   text-align: left;
+  animation: itemIn 260ms var(--ease-out) both;
 }
 
 .list-item p,
@@ -463,6 +516,7 @@ button {
 .picker-shell {
   display: grid;
   place-items: center;
+  max-width: 430px;
 }
 
 .picker-card {
@@ -520,6 +574,7 @@ button {
   padding: 14px;
   background: rgba(24, 32, 24, 0.22);
   backdrop-filter: blur(8px);
+  animation: fadeIn 180ms var(--ease-out) both;
 }
 
 .composer-sheet {
@@ -531,6 +586,7 @@ button {
   border-radius: var(--radius-xl);
   background: var(--surface);
   box-shadow: 0 28px 80px rgba(24, 32, 24, 0.24);
+  animation: sheetIn 260ms var(--ease-out) both;
 }
 
 .request-calendar {
@@ -572,6 +628,14 @@ button {
   border-radius: var(--radius-md);
   background: var(--surface);
   color: var(--text-sub);
+  transition: background 180ms var(--ease-out), transform 120ms var(--ease-press);
+}
+
+.mini-nav button:active,
+.swap-targets button:active,
+.mini-calendar-cell:active,
+.primary-button:active {
+  transform: scale(0.97);
 }
 
 .mini-nav svg {
@@ -599,6 +663,11 @@ button {
   color: var(--text-sub);
   font-size: 0.74rem;
   font-weight: 800;
+  transition:
+    background 180ms var(--ease-out),
+    border-color 180ms var(--ease-out),
+    color 180ms var(--ease-out),
+    transform 120ms var(--ease-press);
 }
 
 .swap-targets button.active {
@@ -617,13 +686,18 @@ button {
   position: relative;
   display: grid;
   place-items: center;
-  min-height: 32px;
+  min-height: 38px;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text);
   font-size: 0.78rem;
   font-weight: 800;
+  transition:
+    background 180ms var(--ease-out),
+    border-color 180ms var(--ease-out),
+    color 180ms var(--ease-out),
+    transform 120ms var(--ease-press);
 }
 
 .mini-calendar-cell.nick {
@@ -714,6 +788,7 @@ textarea {
   outline: none;
   background: color-mix(in srgb, var(--surface) 82%, white);
   color: var(--text);
+  transition: border-color 180ms var(--ease-out), box-shadow 180ms var(--ease-out), background 180ms var(--ease-out);
 }
 
 textarea {
@@ -770,8 +845,160 @@ textarea:focus {
   }
 }
 
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes itemIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sheetIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes confirmIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.99);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 380px) {
+  .app-shell {
+    padding-left: max(6px, env(safe-area-inset-left));
+    padding-right: max(6px, env(safe-area-inset-right));
+  }
+
+  .panel,
+  .picker-card {
+    padding: 14px;
+  }
+
+  .global-actions {
+    gap: 5px;
+  }
+
+  .global-actions button {
+    font-size: 0.72rem;
+  }
+
+  .mini-calendar-cell {
+    min-height: 34px;
+  }
+}
+
+@media (min-width: 640px) {
+  .app-shell {
+    padding-left: max(18px, env(safe-area-inset-left));
+    padding-right: max(18px, env(safe-area-inset-right));
+  }
+
+  .owner-hero {
+    min-height: 116px;
+  }
+
+  .owner-hero h2 {
+    font-size: 1.7rem;
+  }
+
+  .calendar-cell {
+    min-height: 52px;
+  }
+}
+
 @media (min-width: 820px) {
   .app-shell {
-    padding-top: 34px;
+    padding-top: max(26px, env(safe-area-inset-top));
+  }
+
+  .app-header,
+  .owner-hero,
+  .global-actions,
+  .save-confirmation {
+    max-width: 560px;
+  }
+
+  .primary-layout {
+    grid-template-columns: minmax(430px, 1.15fr) minmax(280px, 0.85fr);
+    align-items: start;
+  }
+
+  .secondary-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .calendar-cell {
+    min-height: 58px;
+  }
+
+  .composer-sheet {
+    width: min(92vw, 720px);
+  }
+
+  .request-calendar {
+    padding: var(--space);
+  }
+
+  .mini-calendar-cell {
+    min-height: 40px;
+  }
+}
+
+@media (min-width: 1080px) {
+  .primary-layout {
+    grid-template-columns: minmax(520px, 1.2fr) minmax(360px, 0.8fr);
+  }
+
+  .calendar-cell {
+    min-height: 64px;
+  }
+
+  .owner-hero {
+    min-height: 126px;
+  }
+
+  .owner-hero h2 {
+    font-size: 1.95rem;
   }
 }
