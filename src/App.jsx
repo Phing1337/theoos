@@ -7,7 +7,7 @@ const USERS = {
 }
 
 const REQUEST_WINDOWS = ['morning', 'afternoon', 'evening', 'full']
-const SCHEDULE_START = parseDate('2025-05-11')
+const SCHEDULE_START = parseDate('2026-05-11')
 const CYCLE = ['nick', 'nick', 'kayla', 'kayla', 'nick', 'nick', 'nick', 'kayla', 'kayla', 'nick', 'nick', 'kayla', 'kayla', 'kayla']
 
 function createDefaults() {
